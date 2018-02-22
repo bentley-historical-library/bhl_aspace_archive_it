@@ -1,0 +1,25 @@
+<%= setup_context :title => "Archive-It Import" %>
+
+<div class="row">
+  <div class="col-md-12">
+    <h2>Import from Archive-It</h2>
+
+    <%= render_aspace_partial :partial => "shared/flash_messages" %>
+
+    <%= form_tag({:controller => :archive_it, :action => :import}, {:class => "form-horizontal"}) do |form| %>
+
+      <div class="input-group input-group-lg"> 
+        <input type="text" name="seed_url" class="form-control" placeholder="Enter a seed URL">
+        <div class="input-group-btn">
+          <button class="btn btn-primary btn-default" type="submit">
+            <%= I18n.t("plugins.archive_it.actions.import") %>
+          </button>
+        </div>
+      </div>
+    <% end %>
+    <br/>
+    <div>Copy and paste a seed URL from the Archive-It administrative interface.</div>
+    <div>The URL should look like: https://partner.archive-it.org/934/collections/[collection_id]/seeds/[seed_id]</div>
+    <div>A new archival object will be created for the seed. You will be redirected to the new archival object.</div>
+  </div>
+</div>

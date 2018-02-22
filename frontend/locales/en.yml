@@ -1,0 +1,6 @@
+en:
+  plugins:
+    archive_it:
+      label: Archive-It Import
+      actions:
+        import: Import
