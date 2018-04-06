@@ -12,11 +12,10 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
 
   @archival_object_map = {
     :repository => :handle_repo_code,
-    :title => :handle_title,
+    [:title, :dates] => :handle_title,
     :linked_agents => :handle_agents,
     :subjects => :handle_subjects,
-    :extents => :handle_extents,
-    :dates => :handle_dates,
+    :extents => :handle_extents
   }
 
   @resource_map = {
@@ -25,15 +24,13 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
     :ead_location => :handle_ead_loc
   }
 
-  @digital_object_map = {
-    :wayback_links => :handle_wayback_links
-  }
 
   attr_accessor :leader_string
   attr_accessor :controlfield_string
   attr_accessor :controlfield_007
   attr_accessor :full_record
   attr_accessor :wayback_links
+  attr_accessor :inclusive_dates
 
   @@datafield = Class.new do
 
@@ -102,11 +99,11 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
 
   # subtypes of 'archival object':
 
-  def self.from_resource(obj, wayback_links)
+  def self.from_resource(obj, wayback_links, inclusive_dates)
     obj[:wayback_links] = wayback_links
+    obj[:dates] = inclusive_dates
     marc = self.from_archival_object(obj)
     marc.apply_map(obj, @resource_map)
-    #marc.apply_map(obj, @digital_object_map)
     marc.send(:handle_wayback_links, wayback_links)
     marc.leader_string = "00000nkiaa22     3u 4500"
     #marc.leader_string[7] = obj.level == 'item' ? 'm' : 'c'
@@ -117,18 +114,18 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
     # to debug
     marc.full_record = obj.to_s
     marc.wayback_links = wayback_links.to_s
+    marc.inclusive_dates = inclusive_dates.to_s
 
     marc
   end
 
   def self.assemble_controlfield_string(obj)
-    date = obj.dates[0] || {}
     # date entered on file
     string = obj['system_mtime'].scan(/\d{2}/)[1..3].join('')
     # continuing resource
     string += 'c'
     # dates
-    string += "201u9999"
+    string += "20uu9999"
     string += "miu"
     string += "nnn"
     12.times { string += ' ' }
@@ -156,38 +153,25 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
     end
   end
 
-
   def handle_wayback_links(wayback_links)
     wayback_links.each do |wayback_link|
-      df!('856', '4', '1').with_sfs(['u', wayback_link], ['z', '2014025 Aa 3'], ['3', 'Archived website'])
+      df!('856', '4', '1').with_sfs(['3', 'Archived website'], ['u', wayback_link], ['z', '2014025 Aa 3'])
     end
   end
 
 
-  def handle_title(title)
-    df('245', '1', '0').with_sfs(['a', title])
-  end
+  def handle_title(title, inclusive_dates)
+    date_codes = []
+    if inclusive_dates
+      code = "f"
+      val = verify_terminal_punctuation(inclusive_dates)
+      date_codes.push([code, val])
+    end
 
-
-  def handle_dates(dates)
-    return false if dates.empty?
-
-    dates = [["single", "inclusive", "range"], ["bulk"]].map {|types|
-      dates.find {|date| types.include? date['date_type'] }
-    }.compact
-
-    dates.each do |date|
-      code = date['date_type'] == 'bulk' ? 'g' : 'f'
-      val = nil
-      if date['expression'] && date['date_type'] != 'bulk'
-        val = date['expression']
-      elsif date['date_type'] == 'single'
-        val = date['begin']
-      else
-        val = "#{date['begin']} - #{date['end']}"
-      end
-
-      df('245', '1', '0').with_sfs([code, val])
+    if date_codes.length > 0
+      df('245', '1', '0').with_sfs(['a', title + ","], *date_codes)
+    else
+      df('245', '1', '0').with_sfs(['a', verify_terminal_punctuation(title)])
     end
   end
 
@@ -211,6 +195,39 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
       '0'
     else
       ASpaceMappings::MARC21.get_marc_source_code(source)
+    end
+  end
+
+  def select_non_empty_sfs(sfs)
+    sfs.map{|sf| sf if sf[1] && !sf[1].empty?}.compact
+  end
+
+  def verify_terminal_punctuation_for_sfs(sfs)
+    text_sfs = select_non_empty_sfs(sfs)
+    text_sfs[-1][1] = verify_terminal_punctuation(text_sfs[-1][1])
+    text_sfs
+  end
+
+  def verify_terminal_punctuation(string)
+    terminal_punctuation_regex = /[\.\)\-]$/
+    if string =~ terminal_punctuation_regex
+      string
+    else
+      string += "."
+    end
+  end
+
+  def remove_terminal_punctuation_for_sfs(sfs)
+    text_sfs = select_non_empty_sfs(sfs)
+    text_sfs[-1][1] = remove_terminal_punctuation(text_sfs[-1][1])
+    text_sfs
+  end
+
+  def remove_terminal_punctuation(string)
+    if string.end_with?(".")
+      string.gsub(/\.$/, "")
+    else
+      string
     end
   end
 
@@ -250,6 +267,8 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
         sfs << [tag, t['term']]
       end
 
+      sfs = verify_terminal_punctuation_for_sfs(sfs)
+
       if ind2 == '7'
         sfs << ['2', subject['source']]
       end
@@ -266,25 +285,43 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
     creator = link['_resolved']
     name = creator['display_name']
     ind2 = ' '
-    #role_info = link['relator'] ? ['4', link['relator']] : ['e', 'creator']
 
     case creator['agent_type']
 
     when 'agent_corporate_entity'
       code = '110'
       ind1 = '2'
+      if name['qualifier']
+        if name['subordinate_name_2']
+          name['subordinate_name_2'] += " (#{name['qualifier']})"
+        elsif name['subordinate_name_1']
+          name['subordinate_name_1'] += " (#{name['qualifier']})"
+        else
+          name['primary_name'] += " (#{name['qualifier']})"
+        end
+      end
+
+      if name['subordinate_name_2']
+        name['primary_name'] = verify_terminal_punctuation(name['primary_name'])
+        name['subordinate_name_1'] = verify_terminal_punctuation(name['subordinate_name_1'])
+      elsif name['subordinate_name_1']
+        name['primary_name'] = verify_terminal_punctuation(name['primary_name'])
+      end
+
       sfs = [
               ['a', name['primary_name']],
               ['b', name['subordinate_name_1']],
               ['b', name['subordinate_name_2']],
               ['n', name['number']],
               ['d', name['dates']],
-              ['g', name['qualifier']],
             ]
 
     when 'agent_person'
       joint, ind1 = name['name_order'] == 'direct' ? [' ', '0'] : [', ', '1']
       name_parts = [name['primary_name'], name['rest_of_name']].reject{|i| i.nil? || i.empty?}.join(joint)
+      if name['qualifier']
+        name_parts += " (#{name['qualifier']})"
+      end
 
       code = '100'
       sfs = [
@@ -293,21 +330,23 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
               ['c', %w(prefix title suffix).map {|prt| name[prt]}.compact.join(', ')],
               ['q', name['fuller_form']],
               ['d', name['dates']],
-              ['g', name['qualifier']],
             ]
 
     when 'agent_family'
       code = '100'
       ind1 = '3'
+      family_name = name['family_name']
+      if name['qualifier']
+        family_name += " (#{name['qualifier']})"
+      end
       sfs = [
-              ['a', name['family_name']],
+              ['a', family_name],
               ['c', name['prefix']],
               ['d', name['dates']],
-              ['g', name['qualifier']],
             ]
     end
 
-    #sfs << role_info
+    sfs = verify_terminal_punctuation_for_sfs(sfs)
     df(code, ind1, ind2).with_sfs(*sfs)
   end
 
@@ -322,6 +361,7 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
       subject = link['_resolved']
       name = subject['display_name']
       relator = link['relator']
+      next unless relator != 'pbl'
       contributor = relator == 'ctb' ? true : false
       terms = link['terms']
       ind2 = source_to_code(name['source'])
@@ -331,17 +371,36 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
       when 'agent_corporate_entity'
         code = contributor ? '710' : '610'
         ind1 = '2'
+        if name['qualifier']
+          if name['subordinate_name_2']
+            name['subordinate_name_2'] += " (#{name['qualifier']})"
+          elsif name['subordinate_name_1']
+            name['subordinate_name_1'] += " (#{name['qualifier']})"
+          else
+            name['primary_name'] += " (#{name['qualifier']})"
+          end
+        end
+
+        if name['subordinate_name_2']
+          name['primary_name'] = verify_terminal_punctuation(name['primary_name'])
+          name['subordinate_name_1'] = verify_terminal_punctuation(name['subordinate_name_1'])
+        elsif name['subordinate_name_1']
+          name['primary_name'] = verify_terminal_punctuation(name['primary_name'])
+        end
+
         sfs = [
                 ['a', name['primary_name']],
                 ['b', name['subordinate_name_1']],
                 ['b', name['subordinate_name_2']],
                 ['n', name['number']],
-                ['g', name['qualifier']],
               ]
 
       when 'agent_person'
         joint, ind1 = name['name_order'] == 'direct' ? [' ', '0'] : [', ', '1']
         name_parts = [name['primary_name'], name['rest_of_name']].reject{|i| i.nil? || i.empty?}.join(joint)
+        if name['qualifier']
+          name_parts += " (#{name['qualifier']})"
+        end
         ind1 = name['name_order'] == 'direct' ? '0' : '1'
         code = contributor ? '700' : '600'
         sfs = [
@@ -350,20 +409,26 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
                 ['c', %w(prefix title suffix).map {|prt| name[prt]}.compact.join(', ')],
                 ['q', name['fuller_form']],
                 ['d', name['dates']],
-                ['g', name['qualifier']],
               ]
 
       when 'agent_family'
         code = contributor ? '700' : '600'
         ind1 = '3'
+        family_name = name['family_name']
+        if name['qualifier']
+          family_name += " (#{name['qualifier']})"
+        end
         sfs = [
-                ['a', name['family_name']],
+                ['a', family_name],
                 ['c', name['prefix']],
                 ['d', name['dates']],
-                ['g', name['qualifier']],
               ]
 
       end
+
+      if terms.length > 0
+        sfs = remove_terminal_punctuation_for_sfs(sfs)
+      end 
 
       terms.each do |t|
         tag = case t['term_type']
@@ -380,10 +445,7 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
         sfs << ['2', subject['source']]
       end
 
-      if relator == 'pbl'
-        sfs << ['4', 'pbl']
-      end
-
+      sfs = verify_terminal_punctuation_for_sfs(sfs)
       df(code, ind1, ind2, i).with_sfs(*sfs)
     end
 
@@ -405,17 +467,36 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
       when 'agent_corporate_entity'
         code = '710'
         ind1 = '2'
+        if name['qualifier']
+          if name['subordinate_name_2']
+            name['subordinate_name_2'] += " (#{name['qualifier']})"
+          elsif name['subordinate_name_1']
+            name['subordinate_name_1'] += " (#{name['qualifier']})"
+          else
+            name['primary_name'] += " (#{name['qualifier']})"
+          end
+        end
+
+        if name['subordinate_name_2']
+          name['primary_name'] = verify_terminal_punctuation(name['primary_name'])
+          name['subordinate_name_1'] = verify_terminal_punctuation(name['subordinate_name_1'])
+        elsif name['subordinate_name_1']
+          name['primary_name'] = verify_terminal_punctuation(name['primary_name'])
+        end
+
         sfs = [
                 ['a', name['primary_name']],
                 ['b', name['subordinate_name_1']],
                 ['b', name['subordinate_name_2']],
                 ['n', name['number']],
-                ['g', name['qualifier']],
               ]
 
       when 'agent_person'
         joint, ind1 = name['name_order'] == 'direct' ? [' ', '0'] : [', ', '1']
         name_parts = [name['primary_name'], name['rest_of_name']].reject{|i| i.nil? || i.empty?}.join(joint)
+        if name['qualifier']
+          name_parts += " (#{name['qualifier']})"
+        end
         ind1 = name['name_order'] == 'direct' ? '0' : '1'
         code = '700'
         sfs = [
@@ -424,21 +505,23 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
                 ['c', %w(prefix title suffix).map {|prt| name[prt]}.compact.join(', ')],
                 ['q', name['fuller_form']],
                 ['d', name['dates']],
-                ['g', name['qualifier']],
               ]
 
       when 'agent_family'
         ind1 = '3'
         code = '700'
+        family_name = name['family_name']
+        if name['qualifier']
+          family_name += " (#{name['qualifier']})"
+        end
         sfs = [
-                ['a', name['family_name']],
+                ['a', family_name],
                 ['c', name['prefix']],
                 ['d', name['dates']],
-                ['g', name['qualifier']],
               ]
       end
 
-      #sfs << relator_sf
+      sfs = verify_terminal_punctuation_for_sfs(sfs)
       df(code, ind1, ind2).with_sfs(*sfs)
     end
 

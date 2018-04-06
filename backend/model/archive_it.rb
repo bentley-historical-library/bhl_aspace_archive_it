@@ -21,8 +21,10 @@ class ArchiveIt
         end
     end
 
-    def self.get_wayback_links(site_id)
+    def self.get_wayback_links_and_inclusive_dates(site_id)
         wayback_links = []
+        earliest_date = ""
+        latest_date = ""
         seed_ids = ArchivalObject.filter(:parent_id => site_id).map(:id)
         seed_ids.each do |seed_id|
             seed = URIResolver.resolve_references(ArchivalObject.to_jsonmodel(seed_id), ['digital_object'])
@@ -35,15 +37,36 @@ class ArchiveIt
                     wayback_links << link
                 end
             end
+            json.dates.each do |date|
+                begin_year = date["begin"].split("-")[0]
+                end_year = date["end"].split("-")[0]
+
+                if earliest_date.empty? | (begin_year < earliest_date)
+                    earliest_date = begin_year
+                end
+
+                if latest_date.empty? | (end_year > latest_date)
+                    latest_date = end_year
+                end
+
+            end
         end
-        wayback_links
+        if !earliest_date.empty?
+            inclusive_dates = earliest_date
+            if !latest_date.empty? && (latest_date != earliest_date)
+                inclusive_dates += "-#{latest_date}"
+            end
+        else 
+            inclusive_dates = false
+        end
+        {:wayback_links => wayback_links, :inclusive_dates => inclusive_dates}
     end
 
     def self.get_archive_it_collection_resources
-        archive_it_resources = Resource.where(Sequel.like(:identifier, '%archive_it%')).to_hash(:identifier, :id)
+        archive_it_resources = Resource.exclude(:ead_id => nil).where(Sequel.like(:title, '%Web Archives%')).to_hash(:ead_id, :id)
         collection_resource_map = {}
-        archive_it_resources.each do |resource_identifier, resource_id|
-            archive_it_collection = JSON.parse(resource_identifier)[0].split("_")[-1]
+        archive_it_resources.each do |ead_id, resource_id|
+            archive_it_collection = ead_id.split("-")[-1]
             collection_resource_map[archive_it_collection] = resource_id
         end
         collection_resource_map

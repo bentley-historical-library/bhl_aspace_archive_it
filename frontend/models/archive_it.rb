@@ -42,6 +42,7 @@ class ArchiveItImporter
         archival_object = JSONModel(:archival_object).new._always_valid!
         archival_object.resource = {'ref' => JSONModel(:resource).uri_for(resource_id)}
         archival_object.title = site_url
+        archival_object.component_id = @seed_id
         archival_object.level = "otherlevel"
         archival_object.other_level = "seed"
         archival_object.instances = [{:instance_type => 'digital_object', :digital_object => {:ref => digital_object_uri}}]
