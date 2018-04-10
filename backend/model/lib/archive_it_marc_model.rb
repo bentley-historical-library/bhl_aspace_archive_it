@@ -555,7 +555,7 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
                   when 'scopecontent'
                     ['520', '2', ' ', 'a']
                   when 'abstract'
-                    ['520', '3', ' ', 'a']
+                    ['520', '2', ' ', 'a']
                   when 'prefercite'
                     ['524', '8', ' ', 'a']
                   when 'acqinfo'
