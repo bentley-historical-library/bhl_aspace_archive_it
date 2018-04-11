@@ -2,6 +2,7 @@ class ArchiveIt
 
     def self.get_marc_candidates
         site_ids = ArchivalObject.filter(:other_level => 'seed').exclude(:parent_id => nil).map(:parent_id).uniq
+        site_ids
     end
 
     def self.get_wayback_links_and_earliest_capture(site_id)
