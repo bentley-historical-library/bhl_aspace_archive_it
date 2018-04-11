@@ -21,10 +21,9 @@ class ArchiveIt
         end
     end
 
-    def self.get_wayback_links_and_inclusive_dates(site_id)
+    def self.get_wayback_links_and_earliest_capture(site_id)
         wayback_links = []
         earliest_date = ""
-        latest_date = ""
         seed_ids = ArchivalObject.filter(:parent_id => site_id).map(:id)
         seed_ids.each do |seed_id|
             seed = URIResolver.resolve_references(ArchivalObject.to_jsonmodel(seed_id), ['digital_object'])
@@ -39,27 +38,13 @@ class ArchiveIt
             end
             json.dates.each do |date|
                 begin_year = date["begin"].split("-")[0]
-                end_year = date["end"].split("-")[0]
-
                 if earliest_date.empty? | (begin_year < earliest_date)
                     earliest_date = begin_year
                 end
-
-                if latest_date.empty? | (end_year > latest_date)
-                    latest_date = end_year
-                end
-
             end
         end
-        if !earliest_date.empty?
-            inclusive_dates = earliest_date
-            if !latest_date.empty? && (latest_date != earliest_date)
-                inclusive_dates += "-#{latest_date}"
-            end
-        else 
-            inclusive_dates = false
-        end
-        {:wayback_links => wayback_links, :inclusive_dates => inclusive_dates}
+        earliest_capture = earliest_date.empty? ? false : earliest_date
+        {:wayback_links => wayback_links, :earliest_capture => earliest_capture}
     end
 
     def self.get_archive_it_collection_resources

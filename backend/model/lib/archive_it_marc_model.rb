@@ -12,7 +12,8 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
 
   @archival_object_map = {
     :repository => :handle_repo_code,
-    [:title, :dates] => :handle_title,
+    :title => :handle_title,
+    :dates => :handle_publication_statement,
     :linked_agents => :handle_agents,
     :subjects => :handle_subjects,
     :extents => :handle_extents
@@ -28,9 +29,8 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
   attr_accessor :leader_string
   attr_accessor :controlfield_string
   attr_accessor :controlfield_007
-  attr_accessor :full_record
   attr_accessor :wayback_links
-  attr_accessor :inclusive_dates
+  attr_accessor :earliest_capture
 
   @@datafield = Class.new do
 
@@ -99,22 +99,16 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
 
   # subtypes of 'archival object':
 
-  def self.from_resource(obj, wayback_links, inclusive_dates)
+  def self.from_resource(obj, wayback_links, earliest_capture)
     obj[:wayback_links] = wayback_links
-    obj[:dates] = inclusive_dates
+    obj[:dates] = earliest_capture
     marc = self.from_archival_object(obj)
     marc.apply_map(obj, @resource_map)
     marc.send(:handle_wayback_links, wayback_links)
     marc.leader_string = "00000nkiaa22     3u 4500"
-    #marc.leader_string[7] = obj.level == 'item' ? 'm' : 'c'
 
     marc.controlfield_string = assemble_controlfield_string(obj)
     marc.controlfield_007 = "cr cn nnnuunua"
-
-    # to debug
-    marc.full_record = obj.to_s
-    marc.wayback_links = wayback_links.to_s
-    marc.inclusive_dates = inclusive_dates.to_s
 
     marc
   end
@@ -155,23 +149,19 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
 
   def handle_wayback_links(wayback_links)
     wayback_links.each do |wayback_link|
-      df!('856', '4', '1').with_sfs(['3', 'Archived website'], ['u', wayback_link], ['z', '2014025 Aa 3'])
+      df!('856', '4', '1').with_sfs(['3', 'Archived website'], ['u', wayback_link])
     end
   end
 
 
-  def handle_title(title, inclusive_dates)
-    date_codes = []
-    if inclusive_dates
-      code = "f"
-      val = verify_terminal_punctuation(inclusive_dates)
-      date_codes.push([code, val])
-    end
+  def handle_title(title)
+    df('245', '1', '0').with_sfs(['a', verify_terminal_punctuation(title)])
+  end
 
-    if date_codes.length > 0
-      df('245', '1', '0').with_sfs(['a', title + ","], *date_codes)
-    else
-      df('245', '1', '0').with_sfs(['a', verify_terminal_punctuation(title)])
+  def handle_publication_statement(earliest_capture)
+    if earliest_capture
+      publication_statement = "Capture of content began in #{earliest_capture}."
+      df('260', ' ', ' ').with_sfs(['c', publication_statement])
     end
   end
 
@@ -188,6 +178,7 @@ class ArchiveItMARCModel < ASpaceExport::ExportModel
                         ['h', '2014025 Aa 3']
                       )
     df('040', ' ', ' ').with_sfs(['a', repo['org_code']], ['c', repo['org_code']])
+    df('042', ' ', ' ').with_sfs(['a', 'dc'])
   end
 
   def source_to_code(source)
