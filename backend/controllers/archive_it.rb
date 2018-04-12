@@ -19,7 +19,7 @@ class ArchivesSpaceService < Sinatra::Base
     .permissions(["view_repository"])
     .returns([200, "OK"]) \
   do
-    collection_resource_map = ArchiveIt.get_archive_it_collection_resources
+    collection_resource_map = ArchiveIt.get_archive_it_collection_map
 
     json_response(collection_resource_map)
   end

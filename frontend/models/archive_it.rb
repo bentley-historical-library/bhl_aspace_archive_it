@@ -36,7 +36,6 @@ class ArchiveItImporter
         collection_resource_map = JSONModel::HTTP::get_json(URI(@collection_resource_map_uri))
         collection_id = @seed_metadata["collection"].to_s
         resource_id = collection_resource_map[collection_id]
-        $stderr.puts("#{@seed_metadata}")
         digital_object_uri = create_digital_object
         site_url = @seed_metadata["url"]
         archival_object = JSONModel(:archival_object).new._always_valid!

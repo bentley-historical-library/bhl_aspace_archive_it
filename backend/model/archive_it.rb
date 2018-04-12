@@ -31,14 +31,8 @@ class ArchiveIt
         {:wayback_links => wayback_links, :earliest_capture => earliest_capture}
     end
 
-    def self.get_archive_it_collection_resources
-        archive_it_resources = Resource.exclude(:ead_id => nil).where(Sequel.like(:title, '%Web Archives%')).to_hash(:ead_id, :id)
-        collection_resource_map = {}
-        archive_it_resources.each do |ead_id, resource_id|
-            archive_it_collection = ead_id.split("-")[-1]
-            collection_resource_map[archive_it_collection] = resource_id
-        end
-        collection_resource_map
+    def self.get_archive_it_collection_map
+        AppConfig[:archive_it][:collection_map]
     end
 
 end
