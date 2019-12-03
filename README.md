@@ -45,7 +45,7 @@ This plugin assumes a data model in which each Archive-It collection corresponds
 ## Usage
 To enable this plugin, clone this repository to your ArchivesSpace installation's `plugins/` directory and add `bhl_aspace_archive_it` to `AppConfig[:plugins]` in your ArchivesSpace `config.rb`. Then, add an `AppConfig[:archive_it]` entry in `config.rb` mapping Archive-It collection IDs to ArchivesSpace resource IDs, like so:
 
-```json
+```
 AppConfig[:archive_it] = {
            :collection_map => {
                "5476" => 9332,
