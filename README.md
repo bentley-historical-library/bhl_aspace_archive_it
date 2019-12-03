@@ -61,7 +61,7 @@ AppConfig[:archive_it] = {
 ```
 To import a new seed URL into ArchivesSpace, navigate to the repository settings menu (gear icon) in ArchivesSpace and select "Archive-It Import" from the "Plug-ins" drop down menu. You will be taken to the following screen in ArchivesSpace:
 
-![screenshot](docs\screenshot.PNG "The Archive-It Import Screen")
+![Archive-It Import Screen](docs/screenshot.PNG "The Archive-It Import Screen")
 
 Copy and paste a seed URL from the Archive-It administrative interface (note: this is the URL of the Archive-It seed, not the URL of the website) and click the "Import" button. You will be redirected to a new archival object associated with the resource as configured in the above mapping. From there, you may drag and drop the archival object to associate the seed with existing site-level description or create new site-level description with which to associate the seed.
 
