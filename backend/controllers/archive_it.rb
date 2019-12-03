@@ -24,18 +24,6 @@ class ArchivesSpaceService < Sinatra::Base
     json_response(collection_resource_map)
   end
 
-  Endpoint.get('/repositories/:repo_id/archive_it/wayback_links_site/:id')
-    .description("Get a list of wayback URLs for a given site-level Archival Object")
-    .params(["id", :id],
-            ["repo_id", :repo_id])
-    .permissions(["view_repository"])
-    .returns([200, "OK"]) \
-  do
-    wayback_links = ArchiveIt.get_wayback_links(params[:id])
-
-    json_response(:results => wayback_links)
-  end
-
   Endpoint.get('/repositories/:repo_id/archive_it/archive_it_marc/:id.xml')
     .description("Get a MARC 21 representation of a site-level Archival Object")
     .params(["id", :id],
