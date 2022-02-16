@@ -5,6 +5,8 @@ An ArchivesSpace plugin for importing Archive-It seeds. Imported seeds generate 
     backend\
         controllers\
             archive_it.rb
+        job_runners\
+            archive_it_collection_importer.rb
         model\
             lib\
                 archive_it_export.rb
@@ -17,6 +19,7 @@ An ArchivesSpace plugin for importing Archive-It seeds. Imported seeds generate 
             add_archive_it_link.js
         controllers\
             archive_it_controller.rb
+            archive_it_collection_map_controller.rb
         locales\
             en.yml
         models\
@@ -24,9 +27,17 @@ An ArchivesSpace plugin for importing Archive-It seeds. Imported seeds generate 
         views\
             archive_it\
                 index.html.erb
+            archive_it_collection_map\
+                index.html.erb
+            archive_it_import_job\
+                _form.html.erb
+                _show.html.erb
             layout_head.html.erb
         plugin_init.rb
         routes.rb
+    schemas\
+        archive_it_import_job.rb
+    archive-it_mapping.json   (Auto-generated)
     config.yml
 
 ## Data Model
@@ -43,22 +54,8 @@ This plugin assumes a data model in which each Archive-It collection corresponds
               Digital Object Instance
 
 ## Usage
-To enable this plugin, clone this repository to your ArchivesSpace installation's `plugins/` directory and add `bhl_aspace_archive_it` to `AppConfig[:plugins]` in your ArchivesSpace `config.rb`. Then, add an `AppConfig[:archive_it]` entry in `config.rb` mapping Archive-It collection IDs to ArchivesSpace resource IDs, like so:
+To enable this plugin, clone this repository to your ArchivesSpace installation's `plugins/` directory.
 
-```
-AppConfig[:archive_it] = {
-           :collection_map => {
-               "5476" => 9332,
-               "5486" => 9333,
-               "5866" => 9334,
-               "5867" => 9335,
-               "5868" => 9336,
-               "5869" => 9337,
-               "5870" => 9338,
-               "5871" => 9339
-           }
-        }
-```
 To import a new seed URL into ArchivesSpace, navigate to the repository settings menu (gear icon) in ArchivesSpace and select "Archive-It Import" from the "Plug-ins" drop down menu. You will be taken to the following screen in ArchivesSpace:
 
 ![Archive-It Import Screen](docs/screenshot.PNG "The Archive-It Import Screen")
