@@ -54,7 +54,7 @@ This plugin assumes a data model in which each Archive-It collection corresponds
               Digital Object Instance
 
 ## Usage
-To enable this plugin, clone this repository to your ArchivesSpace installation's `plugins/` directory.
+To enable this plugin, clone this repository to your ArchivesSpace installation's `plugins/` directory and add `bhl_aspace_archive_it` to `AppConfig[:plugins]` in your ArchivesSpace `config.rb`.
 
 To import a new seed URL into ArchivesSpace, navigate to the repository settings menu (gear icon) in ArchivesSpace and select "Archive-It Import" from the "Plug-ins" drop down menu. You will be taken to the following screen in ArchivesSpace:
 
