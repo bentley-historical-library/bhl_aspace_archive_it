@@ -5,8 +5,10 @@ require 'securerandom'
 class ArchiveItImporter
 
     def initialize(seed_url, session)
-        archival_object_post_uri = "#{JSONModel::HTTP.backend_url}/repositories/#{session[:repo_id]}/archival_objects"
-        digital_object_post_uri = "#{JSONModel::HTTP.backend_url}/repositories/#{session[:repo_id]}/digital_objects"
+        @repo_id = session[:repo_id]
+
+        archival_object_post_uri = "#{JSONModel::HTTP.backend_url}/repositories/#{@repo_id}/archival_objects"
+        digital_object_post_uri = "#{JSONModel::HTTP.backend_url}/repositories/#{@repo_id}/digital_objects"
         archive_it_mapping = JSON.parse(JSONModel::HTTP::get_json("/current_archive_it_mapping"))
 
         @session = session
@@ -65,6 +67,33 @@ class ArchiveItImporter
         JSON.parse(response)
     end
 
+
+
+    def find_archival_objects(seed_ids)
+        hash = {}
+
+        seed_ids.map do |seed|
+
+            # I could not get  JSONModel::HTTP::get_json("/repositories/#{@repo_id}/find_by_id/archival_objects?component_id[]=#{seed}")  to work
+
+            uri = URI("#{JSONModel::HTTP.backend_url}/repositories/#{@repo_id}/find_by_id/archival_objects?component_id[]=#{seed}")
+
+            res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == 'https') { |http|
+                req = Net::HTTP::Get.new(uri)
+                req["X-ArchivesSpace-Session"] = @session[:session]
+
+                http.request(req)
+            }
+            objs = ASUtils.json_parse(res.body)["archival_objects"]
+
+            if objs[0] then
+                hash[seed] = objs[0]["ref"]
+            end
+        end
+
+        hash
+    end
+
     def get_seed_metadata(seed_id)
         api_uri = URI("https://partner.archive-it.org/api/seed/#{seed_id}")
         response = Net::HTTP.get(api_uri)
@@ -74,12 +103,15 @@ class ArchiveItImporter
 
     def create_digital_object(seed_metadata)
         wayback_url = "https://wayback.archive-it.org/#{seed_metadata['collection']}/*/#{seed_metadata['url']}"
+
         digital_object = JSONModel(:digital_object).new._always_valid!
-        digital_object.title = seed_metadata["url"]
         digital_object.digital_object_id = SecureRandom.hex
-        digital_object.file_versions = [{:file_uri => wayback_url, :xlink_show_attribute => 'new', :xlink_actuate_attribute => 'onRequest'}]
-        #digital_object.notes = [{:type => 'note', :publish => true, :content => ['view captures'], :jsonmodel_type => 'note_digital_object'}]
+        
+        # The title value is not final. The refresh function will modify it
+        digital_object.title = seed_metadata["url"]
+        
         digital_object_response = JSONModel::HTTP::post_json(URI(@digital_object_post_uri), digital_object.to_json)
+
         result = ASUtils.json_parse(digital_object_response.body)
         digital_object_uri = result["uri"]
         digital_object_uri
@@ -97,29 +129,94 @@ class ArchiveItImporter
         site_url = seed_metadata["url"]
 
 
-        archival_object = JSONModel(:archival_object).new._always_valid!
-
-        archival_object.resource = {'ref' => @resource_uri}
-        archival_object.title = site_url
-        archival_object.component_id = seed_id
-        archival_object.level = "otherlevel"
-        archival_object.other_level = "seed"
+        archival_object = JSONModel(:archival_object).new
         archival_object.instances = [{:instance_type => 'digital_object', :digital_object => {:ref => digital_object_uri}}]
 
-        archival_object.external_documents = [{:title => 'Archive-It URL', :location => @seed_url}, {:title => 'Seed URL', :location => "#{seed_metadata['url']}"}]
+        if true then # These values are not final. They will be overwritten by refresh_archival_object()
+            archival_object.resource = {'ref' => @resource_uri}
+            archival_object.title = site_url
+            archival_object.component_id = seed_id
+            archival_object.level = "otherlevel"
+            archival_object.other_level = "seed"
+        end
         
-        archival_object_response = JSONModel::HTTP::post_json(URI(@archival_object_post_uri), archival_object.to_json)
+        refresh_archival_object(ASUtils.json_parse(archival_object.to_json), seed_id, seed_metadata, nil)
+    end
+
+
+
+    def refresh_archival_object(archival_object, seed_id, seed_metadata, archival_uri)
+        if seed_metadata["detail"] == "Not found" then
+            raise "seed_not_found:" + seed_id;
+        end
+
+
+
+        ##########################################################
+        # Update the digital object
+
+        digital_object = JSONModel::HTTP::get_json(archival_object['instances'][0]['digital_object']['ref'])
+
+        wayback_url = "https://wayback.archive-it.org/#{seed_metadata['collection']}/*/#{seed_metadata['url']}"
+
+        digital_object['title'] = seed_metadata["url"]
+        digital_object['file_versions'] = [{:file_uri => wayback_url, :xlink_show_attribute => 'new', :xlink_actuate_attribute => 'onRequest'}]
+        digital_object['notes'] = [{:type => 'note', :publish => true, :content => ['view captures'], :jsonmodel_type => 'note_digital_object'}]
+
+
+
+        ##########################################################
+        # Update the archival object
+
+        archival_object['resource'] = {'ref' => @resource_uri}
+        archival_object['title'] = seed_metadata["url"]
+        archival_object['component_id'] = seed_id
+        archival_object['level'] = "otherlevel"
+        archival_object['other_level'] = "seed"
+
+
+        title = seed_metadata['metadata']['Title']
+        
+        if title == nil then
+            title = "Seed URL"
+        else
+            title = title[0]['value']
+        end
+
+        archival_object['external_documents'] = [{'title' => 'Archive-It URL', 'location' => "#{@collection_url}/seeds/#{seed_id}"}, {'title' => title, 'location' => "#{seed_metadata['url']}"}]
+        
+
+        ##########################################################
+        # Save chnages to ArchivesSpace
+
+        archival_uri ||= @archival_object_post_uri
+        
+        archival_object_response = JSONModel::HTTP::post_json(URI(archival_uri), archival_object.to_json)
 
         result = ASUtils.json_parse(archival_object_response.body)
-
         archival_object_uri = result["uri"]
+
         archival_object_uri
     end
 
     def create_archival_objects
 
         if @one_seed then
-            return Resolver.new(create_archival_object(@seed_ids[0])).view_uri
+            seed = @seed_ids[0]
+
+            records = find_archival_objects(@seed_ids)
+            record_uri = records[seed]
+
+            if record_uri then
+                metadata = get_seed_metadata(seed)
+
+                archival_object = JSONModel::HTTP::get_json(URI(records[seed]))
+
+                archival_uri = "#{JSONModel::HTTP::backend_url}#{records[seed]}"
+                return Resolver.new(refresh_archival_object(archival_object, seed, metadata, archival_uri)).view_uri
+            else
+                return Resolver.new(create_archival_object(seed)).view_uri
+            end
         end
 
 

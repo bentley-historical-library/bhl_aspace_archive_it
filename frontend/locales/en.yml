@@ -41,7 +41,7 @@ en:
           <br>
           <div>To import a public collection:</div>
           <div>The collection URL should look like: https://partner.archive-it.org/[organization_id]/collections/[collection_id]</div>
-          <div>The new archival objects will be created for each public seed. This will run as a background job.</div>
+          <div>The old archival objects will be replaced with new archival objects for each seed. This will run as a background job.</div>
           <br>
           <div>Note that collections must first be mapped to resources before they can be imported.</div>
         begin_job_page: |
