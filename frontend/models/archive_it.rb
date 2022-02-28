@@ -151,6 +151,12 @@ class ArchiveItImporter
         end
 
 
+        title = seed_metadata['metadata']['Title']
+        
+        if title != nil then
+            title = title[0]['value']
+        end
+
 
         ##########################################################
         # Update the digital object
