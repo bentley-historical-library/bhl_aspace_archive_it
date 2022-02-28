@@ -160,8 +160,15 @@ class ArchiveItImporter
         wayback_url = "https://wayback.archive-it.org/#{seed_metadata['collection']}/*/#{seed_metadata['url']}"
 
         digital_object['title'] = seed_metadata["url"]
-        digital_object['file_versions'] = [{:file_uri => wayback_url, :xlink_show_attribute => 'new', :xlink_actuate_attribute => 'onRequest'}]
-        digital_object['notes'] = [{:type => 'note', :publish => true, :content => ['view captures'], :jsonmodel_type => 'note_digital_object'}]
+        digital_object['file_versions'] = [{file_uri: wayback_url, xlink_show_attribute: 'new', xlink_actuate_attribute: 'onRequest'}]
+        
+        if title != nil then
+            digital_object['notes'] = [{type: 'note', publish: true, content: ["Website title: #{title}"], jsonmodel_type: 'note_digital_object'}]
+        else
+            digital_object['notes'] = []
+        end
+
+        digital_object_response = JSONModel::HTTP::post_json(URI(digital_object_uri), digital_object.to_json)
 
 
 
@@ -175,15 +182,7 @@ class ArchiveItImporter
         archival_object['other_level'] = "seed"
 
 
-        title = seed_metadata['metadata']['Title']
-        
-        if title == nil then
-            title = "Seed URL"
-        else
-            title = title[0]['value']
-        end
-
-        archival_object['external_documents'] = [{'title' => 'Archive-It URL', 'location' => "#{@collection_url}/seeds/#{seed_id}"}, {'title' => title, 'location' => "#{seed_metadata['url']}"}]
+        archival_object['external_documents'] = [{'title' => 'Archive-It URL', 'location' => "#{@collection_url}/seeds/#{seed_id}"}, {'title' => title || "Seed URL", 'location' => "#{seed_metadata['url']}"}]
         
 
         ##########################################################
