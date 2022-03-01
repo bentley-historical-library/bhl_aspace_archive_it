@@ -161,7 +161,8 @@ class ArchiveItImporter
         ##########################################################
         # Update the digital object
 
-        digital_object = JSONModel::HTTP::get_json(archival_object['instances'][0]['digital_object']['ref'])
+        digital_uri = archival_object['instances'][0]['digital_object']['ref']
+        digital_object = JSONModel::HTTP::get_json(digital_uri)
 
         wayback_url = "https://wayback.archive-it.org/#{seed_metadata['collection']}/*/#{seed_metadata['url']}"
 
@@ -174,7 +175,7 @@ class ArchiveItImporter
             digital_object['notes'] = []
         end
 
-        digital_object_response = JSONModel::HTTP::post_json(URI(digital_object_uri), digital_object.to_json)
+        digital_object_response = JSONModel::HTTP::post_json(URI("#{JSONModel::HTTP.backend_url}#{digital_uri}"), digital_object.to_json)
 
 
 
