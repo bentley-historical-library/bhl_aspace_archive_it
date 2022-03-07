@@ -39,7 +39,7 @@ class ArchiveItCollectionImporter < JobRunner
 
 
                 log("Updating #{@backend_url}#{@resource_uri}")
-                log("This will update all seeds from the latest Archive-It data.")
+                log("This will update all seeds with the latest Archive-It data.")
         
                 @job.record_created_uris([@resource_uri]) # record_modified_uris doesn't work, so I'm using the next best thing   
 
@@ -216,7 +216,8 @@ class ArchiveItCollectionImporter < JobRunner
         wayback_url = "https://wayback.archive-it.org/#{seed_metadata['collection']}/*/#{seed_metadata['url']}"
 
         digital_object['title'] = seed_metadata["url"]
-        digital_object['file_versions'] = [{file_uri: wayback_url, xlink_show_attribute: 'new', xlink_actuate_attribute: 'onRequest'}]
+        digital_object['file_versions'] = [{file_uri: wayback_url, xlink_show_attribute: 'new', xlink_actuate_attribute: 'onRequest', publish: true}]
+        digital_object['publish'] = true
         
         if title != nil then
             digital_object['notes'] = [{type: 'note', publish: true, content: ["Website title: #{title}"], jsonmodel_type: 'note_digital_object'}]

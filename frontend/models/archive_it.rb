@@ -167,7 +167,8 @@ class ArchiveItImporter
         wayback_url = "https://wayback.archive-it.org/#{seed_metadata['collection']}/*/#{seed_metadata['url']}"
 
         digital_object['title'] = seed_metadata["url"]
-        digital_object['file_versions'] = [{file_uri: wayback_url, xlink_show_attribute: 'new', xlink_actuate_attribute: 'onRequest'}]
+        digital_object['file_versions'] = [{file_uri: wayback_url, xlink_show_attribute: 'new', xlink_actuate_attribute: 'onRequest', publish: true}]
+        digital_object['publish'] = true
         
         if title != nil then
             digital_object['notes'] = [{type: 'note', publish: true, content: ["Website title: #{title}"], jsonmodel_type: 'note_digital_object'}]
