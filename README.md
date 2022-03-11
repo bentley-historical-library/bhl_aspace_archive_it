@@ -37,7 +37,6 @@ An ArchivesSpace plugin for importing Archive-It seeds. Imported seeds generate 
         routes.rb
     schemas\
         archive_it_import_job.rb
-    archive-it_mapping.json   (Auto-generated)
     config.yml
 
 ## Data Model
