@@ -32,7 +32,7 @@ class ArchiveIt
     end
 
     def self.get_archive_it_collection_map
-        path = "#{__dir__}/../../archive_it_mapping.json"
+        path = "#{__dir__}/../../../../config/archive_it_mapping.json"
 
         if not File.file?(path) then
             return "{}"

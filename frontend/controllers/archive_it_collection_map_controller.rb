@@ -41,7 +41,7 @@ class ArchiveItCollectionMapController < ApplicationController
 
 
         # Save the mapping to a file
-        path = "#{__dir__}/../../archive_it_mapping.json"
+        path = "#{__dir__}/../../../../config/archive_it_mapping.json"
 
         File.open(path, 'w') do |file|
             file.write(mapping.to_json)
