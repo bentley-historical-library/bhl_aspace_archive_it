@@ -220,9 +220,11 @@ class ArchiveItImporter
                 archival_object = JSONModel::HTTP::get_json(URI(records[seed]))
 
                 archival_uri = "#{JSONModel::HTTP::backend_url}#{records[seed]}"
-                return Resolver.new(refresh_archival_object(archival_object, seed, metadata, archival_uri)).view_uri
+                seed_uri = refresh_archival_object(archival_object, seed, metadata, archival_uri)
+                
+                return Resolver.new(seed_uri).view_uri, false
             else
-                return Resolver.new(create_archival_object(seed)).view_uri
+                return Resolver.new(create_archival_object(seed)).view_uri, true
             end
         end
 

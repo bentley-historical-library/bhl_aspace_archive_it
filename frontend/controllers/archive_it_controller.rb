@@ -33,12 +33,19 @@ class ArchiveItController < JobsController
         begin
             importer = ArchiveItImporter.new(seed_url, session)
 
-            redirect_url = importer.create_archival_objects
+            redirect_url, isCreated = importer.create_archival_objects
+
         rescue Exception => ex
             redirect_url = "/plugins/archive_it?error=#{ex.message}"
         end
 
         redirect_to redirect_url
+        
+        if isCreated then
+            flash[:success] = I18n.t("plugins.archive_it.messages.seed_created")
+        elsif isCreated == false then
+            flash[:success] = I18n.t("plugins.archive_it.messages.seed_overwritten")
+        end
     end
 
     private

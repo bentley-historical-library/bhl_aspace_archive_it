@@ -21,6 +21,8 @@ en:
         enter_ai_id: Enter Archive-It collection ID
         enter_as_id: Enter ArchivesSpace resource ID
         link_to_mapping: Configure the collection mapping here
+        seed_created: This object was newly created for this seed.
+        seed_overwritten: This object was updated with the latest seed metadata.
       errors:
         no_mapping: No mapping existed for the collection ID \#{id}.
         collection_not_found: No seeds were found for collection ID \#{id}. Does the collection exist and is it public?
