@@ -37,13 +37,17 @@ en:
         importing_url: |
           <div>Copy and paste a public seed or collection URL from the Archive-It administrative interface.</div>
           <br>
-          <div>To import a public seed:</div>
-          <div>The seed URL should look like: https://partner.archive-it.org/[organization_id]/collections/[collection_id]/seeds/[seed_id]</div>
-          <div>A new archival object will be created for the seed. You will be redirected to the new archival object.</div>
+          <div>How importing works:</div>
+          <div>&emsp;&emsp;The collection ID of the provided Archive-It URL is used to find the corresponding ArchivesSpace resource ID using the <a href="/plugins/archive_it_collection_map">collection map</a>.</div>
+          <div>&emsp;&emsp;Then an archival object will be created for each seed and stored in the object hierarchy of the correspondingly-mapped resource.</div>
+          <div>&emsp;&emsp;If a seed has already been imported, the archival object's seed metadata will be overwritten with the latest metadata from Archive-It.</div>
           <br>
-          <div>To import a public collection:</div>
-          <div>The collection URL should look like: https://partner.archive-it.org/[organization_id]/collections/[collection_id]</div>
-          <div>The old archival objects will be replaced with new archival objects for each seed. This will run as a background job.</div>
+          <div>When importing a public seed:</div>
+          <div>&emsp;&emsp;The seed URL should look like: https://partner.archive-it.org/[organization_id]/collections/[collection_id]/seeds/[seed_id]</div>
+          <br>
+          <div>When importing a public collection:</div>
+          <div>&emsp;&emsp;The collection URL should look like: https://partner.archive-it.org/[organization_id]/collections/[collection_id]</div>
+          <div>&emsp;&emsp;This will import/update all public seeds in the collection as a background job.</div>
           <br>
           <div>Note that collections must first be mapped to resources before they can be imported.</div>
         begin_job_page: |
