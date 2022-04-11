@@ -1,0 +1,180 @@
+<%= setup_context :title => I18n.t("plugins.archive_it_collection_map.label") %>
+
+<div class="row">
+	<div class="col-md-12">
+		<h2><%= I18n.t("plugins.archive_it.labels.mapping_page_header") %></h2>
+
+		<%= render_aspace_partial :partial => "shared/flash_messages" %>
+
+		<div><%= I18n.t("plugins.archive_it.messages.service_notice") %></div>
+		<br/>
+		<%= I18n.t("plugins.archive_it.about.configuring_mapping") %>
+		<br/>
+		<%= form_tag({:controller => :archive_it_collection_map, :action => :save_mapping}, {:class => "form-horizontal"}) do |form| %>
+
+			<div class="container">
+				<div class="col-lg-2"></div>
+				<div class="col-lg-8">
+				<table class="table table-bordered table-sm align-middle">
+					<thead>
+					<th class="mx-auto col-sm-6" scope="col">
+					<%= I18n.t("plugins.archive_it.labels.ai_id") %>
+					</th>
+					<th class="mx-auto col-sm-6" scope="col">
+					<%= I18n.t("plugins.archive_it.labels.as_id") %>
+					</th>
+					<th>
+						<button style="visibility: hidden;" class="btn btn-xs"><%= I18n.t("plugins.archive_it.actions.remove") %></button>
+					</th>
+					<tbody id="tableBody"></tbody>
+				</table>
+				<br/>
+					<button class="btn btn-default" onclick="addRow()" type="button">
+						<%= I18n.t("plugins.archive_it.actions.add_mapping") %>
+					</button>
+					<button class="btn btn-primary pull-right" type="submit" style="margin-left: 2rem;">
+						<%= I18n.t("plugins.archive_it.actions.save") %>
+					</button>
+					<a href="./archive_it_collection_map">
+						<button class="btn btn-default pull-right" type="button">
+							<%= I18n.t("plugins.archive_it.actions.revert") %>
+						</button>
+					</a>
+				</div>
+			</div>
+		
+		<% end %>
+		<br/>
+
+		<!--
+		<div class="input-group linker-wrapper">
+			<input type="text" class="linker"
+					id="collection_resource"
+					data-label="<%= I18n.t("top_container._frontend.bulk_operations.collection_resource_singular") %>"
+					data-label_plural="<%= I18n.t("top_container._frontend.bulk_operations.collection_resource_plural") %>"
+					data-name="ref"
+					data-path="collection_resource"
+					data-url="<%= url_for  :controller => :search, :action => :do_search, :format => :json %>"
+					data-browse-url="<%= url_for :controller => :search, :action => :do_search, :format => :js, :facets => [], :sort => "title_sort asc" %>"
+					data-selected="{}"
+					data-multiplicity="one"
+					data-types='<%= ['resource'].to_json %>'
+			/>
+			<div class="input-group-btn">
+				<a class="btn btn-default dropdown-toggle last" data-toggle="dropdown" href="javascript:void(0);" title="Link to resource" aria-label="Link to resource"><span class="caret"></span></a>
+				<ul class="dropdown-menu">
+				<li><a href="javascript:void(0);" class="linker-browse-btn"><%= I18n.t("actions.browse") %></a></li>
+				</ul>
+			</div>
+		</div>
+		-->
+
+		<script>{
+			const $ = function(tagAndClassNames = null, attributes = null, children = null){
+				if(tagAndClassNames == null || tagAndClassNames == ''){
+					return document.createTextNode(attributes ?? '');
+				}
+				if(tagAndClassNames[0] == '#'){
+					return document.getElementById(tagAndClassNames.slice(1));
+				}
+
+				let tag_id_classes = tagAndClassNames.split('.');
+
+				let tag_id = tag_id_classes[0].split('#');
+				const elem = document.createElement(tag_id[0]);
+				if(tag_id.length == 2){
+					elem.id = tag_id[1];
+				}
+				elem.className = tag_id_classes.slice(1).join(' ');
+
+				if(children == null && Array.isArray(attributes)){
+					children = attributes;
+				}
+				else {
+					for(const attr in attributes ?? {}){
+						elem[attr] = attributes[attr];
+					}
+				}
+
+				for(const child of children ?? []){
+					if(typeof child === 'string' || child instanceof String)
+						elem.appendChild(document.createTextNode(child ?? ''));
+					else
+						elem.appendChild(child)
+				}
+
+				return elem;
+			}
+
+			const newTD = function(row, type, placeholder, value, onclick){
+				return $('td', [
+					$('div.input-group', [
+						$('input.form-control', {type: "text", name: `${row}${type}`, placeholder, autocomplete: 'off', value}),
+						$('span.input-group-btn', [
+							$('button.btn.btn-default', {onclick, type: "button"}, ["View"])
+						])
+					])
+				]);
+			}
+
+			const viewArchiveIt = function(id){
+				const ai_id = $(`#${id}`).children[0].children[0].children[0].value;
+
+				open(`https://partner.archive-it.org/api/collection/${ai_id}`);
+			}
+
+			const viewArchivesSpace = function(id){
+				const as_id = $(`#${id}`).children[1].children[0].children[0].value;
+				
+				open(`../resources/${as_id}`);
+			}
+
+			let row = 0;
+			
+			function addRow(archiveItID, archivesSpaceID, focused = false){
+				let row_id = `row${row}`;
+				$('#tableBody').appendChild($(`tr#${row_id}`, [
+					newTD(row_id, "ai", "<%= I18n.t("plugins.archive_it.messages.enter_ai_id") %>", archiveItID ?? "", () => viewArchiveIt(row_id)),
+					newTD(row_id, "as", "<%= I18n.t("plugins.archive_it.messages.enter_as_id") %>", archivesSpaceID ?? "", () => viewArchivesSpace(row_id)),
+					$('td', [$('button.btn.btn-xs.btn-danger', {onclick: () => removeRow(row_id)}, ["<%= I18n.t("plugins.archive_it.actions.remove") %>"])]),
+				]));
+				
+				if(focused){
+					$(`#${row_id}`).children[1].children[0].children[0].focus();
+				}
+
+				row += 1;
+			}
+			
+			function removeRow(id){
+				$('#tableBody').removeChild($(`#${id}`));
+			}
+
+			const fix_collection = <%= @fix || 0 %>;
+			let found_fixed = false;
+
+			function load_current_mapping(){
+				const current_mapping = JSON.parse("<%= @current_mapping.to_json %>".replace(/&quot;/g, '"'));
+
+				const tbody = $('#tableBody');
+
+				while(tbody.firstChild){
+					tbody.removeChild(tbody.firstChild)
+				}
+
+				for(const id in current_mapping){
+					if(id == fix_collection){
+						found_fixed = true;
+					}
+					addRow(id, current_mapping[id], id == fix_collection);
+				}
+			}
+
+			load_current_mapping();
+
+			if(fix_collection && !found_fixed){
+				addRow(fix_collection, null, true);
+			}
+		}</script>
+	</div>
+</div>

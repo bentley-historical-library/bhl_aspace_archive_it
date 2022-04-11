@@ -2,5 +2,64 @@ en:
   plugins:
     archive_it:
       label: Archive-It Import
+      labels:
+        import_page_header: Import from Archive-It
+        mapping_page_header: Edit the Archive-It Collection Map
+        ai_id: Archive-It Collection ID
+        as_id: ArchivesSpace Resource ID
       actions:
         import: Import
+        remove: Remove
+        save: Save
+        revert: Revert unsaved changes
+        add_mapping: Add new mapping
+      messages:
+        service_notice: This plugin depends on the Archive-It web API that may or may not be available or supported.
+        enter_url: Enter a seed or collection URL
+        fix_mapping: Fix the collection mapping for \#{id}
+        saved: The collection mapping has been saved
+        enter_ai_id: Enter Archive-It collection ID
+        enter_as_id: Enter ArchivesSpace resource ID
+        link_to_mapping: Configure the collection mapping here
+        seed_created: This object was newly created for this seed.
+        seed_overwritten: This object was updated with the latest seed metadata.
+      errors:
+        no_mapping: No mapping existed for the collection ID \#{id}.
+        collection_not_found: No seeds were found for collection ID \#{id}. Does the collection exist and is it public?
+        seed_not_found: Could not find seed ID \#{id}. Does the seed exist and is it public?
+        no_resource: Cannot map collection ID \#{id} to an invalid ArchivesSpace resource ID \#{id2}.
+        collection_empty: There are no seeds to import from collection ID \#{id}. Are the seeds private?
+      about:
+        configuring_mapping: |
+          <div>To add a new mapping, just press the "Add new mapping" button and configure the new entry.</div>
+          <div>The Archive-It ID must be valid ID for a public collection.</div>
+          <div>The ArchiveSpace Resource field must be an ArchivesSpace resource ID.</div>
+        importing_url: |
+          <div>Copy and paste a public seed or collection URL from the Archive-It administrative interface.</div>
+          <br>
+          <div>How importing works:</div>
+          <div>&emsp;&emsp;The collection ID of the provided Archive-It URL is used to find the corresponding ArchivesSpace resource ID using the <a href="/plugins/archive_it_collection_map">collection map</a>.</div>
+          <div>&emsp;&emsp;Then an archival object will be created for each seed and stored in the object hierarchy of the correspondingly-mapped resource.</div>
+          <div>&emsp;&emsp;If a seed has already been imported, the archival object's seed metadata will be overwritten with the latest metadata from Archive-It.</div>
+          <br>
+          <div>When importing a public seed:</div>
+          <div>&emsp;&emsp;The seed URL should look like: https://partner.archive-it.org/[organization_id]/collections/[collection_id]/seeds/[seed_id]</div>
+          <br>
+          <div>When importing a public collection:</div>
+          <div>&emsp;&emsp;The collection URL should look like: https://partner.archive-it.org/[organization_id]/collections/[collection_id]</div>
+          <div>&emsp;&emsp;This will import/update all public seeds in the collection as a background job.</div>
+          <br>
+          <div>Note that collections must first be mapped to resources before they can be imported.</div>
+        begin_job_page: |
+          <br>
+          <div><b>Do not use this page to start an Archive-It import job.</b></div>
+          <br>
+          <div>Instead, use the gear icon next to the repository on the top right, then go to <a href="/plugins/archive_it">Plug-ins > Archive-It Import</a>.</div>
+    archive_it_collection_map:
+      label: Archive-It Collection Map
+  archive_it_import_job:
+    collection_url: Collection URL
+    resource_uri: Mapped resource URI
+  job:
+    types:
+      archive_it_import_job: Archive-It Import

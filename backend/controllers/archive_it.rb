@@ -13,10 +13,9 @@ class ArchivesSpaceService < Sinatra::Base
     json_response(:results => candidates)
   end
 
-  Endpoint.get('/repositories/:repo_id/archive_it/archive_it_collections')
+  Endpoint.get('/current_archive_it_mapping')
     .description("Get a mapping of Archive-It collections and ArchivesSpace Resources")
-    .params(["repo_id", :repo_id])
-    .permissions(["view_repository"])
+    .permissions([])
     .returns([200, "OK"]) \
   do
     collection_resource_map = ArchiveIt.get_archive_it_collection_map
@@ -27,7 +26,7 @@ class ArchivesSpaceService < Sinatra::Base
   Endpoint.get('/repositories/:repo_id/archive_it/archive_it_marc/:id.xml')
     .description("Get a MARC 21 representation of a site-level Archival Object")
     .params(["id", :id],
-            ["repo_id", :repo_id])
+        ["repo_id", :repo_id])
     .permissions([:view_repository])
     .returns([200, "(:resource)"]) \
   do

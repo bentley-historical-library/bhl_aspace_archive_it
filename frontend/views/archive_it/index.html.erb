@@ -1,25 +1,40 @@
-<%= setup_context :title => "Archive-It Import" %>
+<%= setup_context :title => I18n.t("plugins.archive_it.label") %>
 
 <div class="row">
-  <div class="col-md-12">
-    <h2>Import from Archive-It</h2>
+    <div class="col-md-12">
+		<h2><%= I18n.t("plugins.archive_it.labels.import_page_header") %></h2>
 
-    <%= render_aspace_partial :partial => "shared/flash_messages" %>
+		<%= render_aspace_partial :partial => "shared/flash_messages" %>
 
-    <%= form_tag({:controller => :archive_it, :action => :import}, {:class => "form-horizontal"}) do |form| %>
+		<% if @fix_collection then %>
+			<form action="./archive_it_collection_map">
+				<input type="hidden" name="fix" value="<%= @fix_collection %>">
+				<button class="btn btn-primary" autofocus>
+					<%=
+						message = I18n.t("plugins.archive_it.messages.fix_mapping")
+						id = @fix_collection
+						eval("\"#{message}\"".gsub(/\\/, ""))
+					%>
+				</button>
+			</form>
+			<br/>
+		<% end %>
+		
+		<%= form_tag({:controller => :archive_it, :action => :import}, {:class => "form-horizontal"}) do |form| %>
 
-      <div class="input-group input-group-lg"> 
-        <input type="text" name="seed_url" class="form-control" placeholder="Enter a seed URL">
-        <div class="input-group-btn">
-          <button class="btn btn-primary btn-default" type="submit">
-            <%= I18n.t("plugins.archive_it.actions.import") %>
-          </button>
-        </div>
-      </div>
-    <% end %>
-    <br/>
-    <div>Copy and paste a seed URL from the Archive-It administrative interface.</div>
-    <div>The URL should look like: https://partner.archive-it.org/934/collections/[collection_id]/seeds/[seed_id]</div>
-    <div>A new archival object will be created for the seed. You will be redirected to the new archival object.</div>
-  </div>
+			<div class="input-group input-group-lg">
+				<input type="text" name="seed_url" class="form-control" placeholder="<%= I18n.t("plugins.archive_it.messages.enter_url") %>">
+				<div class="input-group-btn">
+					<button class="btn btn-primary btn-default" type="submit">
+						<%= I18n.t("plugins.archive_it.actions.import") %>
+					</button>
+				</div>
+			</div>
+		<% end %>
+
+		<br/>
+		<%= I18n.t("plugins.archive_it.about.importing_url") %>
+		<br/>
+		<p><a href="/plugins/archive_it_collection_map"><%= I18n.t("plugins.archive_it.messages.link_to_mapping") %></a></p>
+    </div>
 </div>
