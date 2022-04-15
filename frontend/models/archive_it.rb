@@ -190,7 +190,7 @@ class ArchiveItImporter
         archival_object['other_level'] = "seed"
 
 
-        archival_object['external_documents'] = [{'title' => 'Archive-It URL', 'location' => "#{@collection_url}/seeds/#{seed_id}"}, {'title' => title || "Seed URL", 'location' => "#{seed_metadata['url']}"}]
+        archival_object['external_documents'] = [{'title' => 'Archive-It URL', 'location' => wayback_url}, {'title' => title || "Seed URL", 'location' => "#{seed_metadata['url']}"}]
         
 
         ##########################################################
