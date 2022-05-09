@@ -232,16 +232,14 @@ class ArchiveItCollectionImporter < JobRunner
         # Update the archival object
 
         archival_object['resource'] = {'ref' => @resource_uri}
-        archival_object['title'] = seed_metadata["url"]
+        archival_object['title'] = seed_metadata["url"] + " - " + title
         archival_object['component_id'] = seed_id
         archival_object['level'] = "otherlevel"
         archival_object['other_level'] = "seed"
 
 
-
         archival_object['external_documents'] = [{'title' => 'Archive-It URL', 'location' => wayback_url}, {'title' => title || "Seed URL", 'location' => "#{seed_metadata['url']}"}]
         
-
 
         ##########################################################
         # Save chnages to ArchivesSpace
