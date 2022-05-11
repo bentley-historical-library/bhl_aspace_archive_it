@@ -184,7 +184,8 @@ class ArchiveItImporter
         # Update the archival object
 
         archival_object['resource'] = {'ref' => @resource_uri}
-        archival_object['title'] = seed_metadata["url"] + (title != nil ? " - " + title : "")
+        archive_title = [title, "[Archived website]"].reject(&:nil?).join(' ') + "\n" + seed_metadata["url"]
+        archival_object['title'] = archive_title
         archival_object['component_id'] = seed_id
         archival_object['level'] = "otherlevel"
         archival_object['other_level'] = "seed"
