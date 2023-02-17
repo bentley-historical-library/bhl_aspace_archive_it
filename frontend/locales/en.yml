@@ -21,7 +21,7 @@ en:
         enter_ai_id: Enter Archive-It collection ID
         enter_as_id: Enter ArchivesSpace resource ID
         link_to_mapping: Configure the collection mapping here
-        seed_created: This object was newly created for this seed.
+        seed_created: This object was newly created for the imported seed.
         seed_overwritten: This object was updated with the latest seed metadata.
       errors:
         no_mapping: No mapping existed for the collection ID \#{id}.
@@ -29,6 +29,7 @@ en:
         seed_not_found: Could not find seed ID \#{id}. Does the seed exist and is it public?
         no_resource: Cannot map collection ID \#{id} to an invalid ArchivesSpace resource ID \#{id2}.
         collection_empty: There are no seeds to import from collection ID \#{id}. Are the seeds private?
+        unknown: Unknown error
       about:
         configuring_mapping: |
           <div>To add a new mapping, just press the "Add new mapping" button and configure the new entry.</div>

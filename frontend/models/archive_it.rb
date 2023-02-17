@@ -37,16 +37,9 @@ class ArchiveItImporter
         resource_id = archive_it_mapping[@collection_id]
 
         # Find collection uri
-        search = JSONModel::HTTP::get_json("/search?q=#{resource_id}&fields[]=identifier,uri&type[]=resource&page=1&page_size=1")
-        
-        if search == nil then
-            @resource_uri = JSONModel(:resource).uri_for(resource_id)
-        else
-            raise "no_resource:#{@collection_id}:#{resource_id}"
-        end
+        @resource_uri = JSONModel(:resource).uri_for(resource_id)
 
         # Check if the mapped resource is present in ArchivesSpace
-        # Todo: Is this unnecessary from the code above?
         begin
             resource = JSONModel::HTTP::get_json(JSONModel(:resource).uri_for(resource_id))
             if resource == nil then
