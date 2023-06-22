@@ -10,11 +10,15 @@ class ArchiveItController < JobsController
             p params["error"]
             error, id, id2 = params["error"].split(':')
 
-            errorMessage = I18n.t("plugins.archive_it.errors.#{error}")
+            
+            if ['no_mapping', 'collection_not_found', 'seed_not_found', 'no_resource', 'collection_empty'].include? error then
+                errorMessage = I18n.t("plugins.archive_it.errors.#{error}")
+                flash.now[:error] = eval("\"#{errorMessage}\"".gsub(/\\/, ""))
+            else
+                flash.now[:error] = "#{I18n.t("plugins.archive_it.errors.unknown")}: #{params["error"]}"
+            end
 
-            flash.now[:error] = eval("\"#{errorMessage}\"".gsub(/\\/, ""))
-
-            if error == "no_mapping" || error = "no_resource" then
+            if error == "no_mapping" || error == "no_resource" then
                 @fix_collection = id
             end
         else

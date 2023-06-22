@@ -37,16 +37,9 @@ class ArchiveItImporter
         resource_id = archive_it_mapping[@collection_id]
 
         # Find collection uri
-        search = JSONModel::HTTP::get_json("/search?q=#{resource_id}&fields[]=identifier,uri&type[]=resource&page=1&page_size=1")
-        
-        if search == nil then
-            @resource_uri = JSONModel(:resource).uri_for(resource_id)
-        else
-            raise "no_resource:#{@collection_id}:#{resource_id}"
-        end
+        @resource_uri = JSONModel(:resource).uri_for(resource_id)
 
         # Check if the mapped resource is present in ArchivesSpace
-        # Todo: Is this unnecessary from the code above?
         begin
             resource = JSONModel::HTTP::get_json(JSONModel(:resource).uri_for(resource_id))
             if resource == nil then
@@ -184,13 +177,14 @@ class ArchiveItImporter
         # Update the archival object
 
         archival_object['resource'] = {'ref' => @resource_uri}
-        archival_object['title'] = seed_metadata["url"]
+        archive_title = title.nil? ? seed_metadata["url"] : title + ": archived website"
+        archival_object['title'] = archive_title
         archival_object['component_id'] = seed_id
         archival_object['level'] = "otherlevel"
         archival_object['other_level'] = "seed"
 
 
-        archival_object['external_documents'] = [{'title' => 'Archive-It URL', 'location' => "#{@collection_url}/seeds/#{seed_id}"}, {'title' => title || "Seed URL", 'location' => "#{seed_metadata['url']}"}]
+        archival_object['external_documents'] = [{'title' => 'Archive-It URL', 'location' => wayback_url}, {'title' => title || "Seed URL", 'location' => "#{seed_metadata['url']}"}]
         
 
         ##########################################################
